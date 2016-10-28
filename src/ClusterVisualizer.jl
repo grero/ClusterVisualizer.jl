@@ -74,7 +74,7 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	end
 	
 	#setup windows
-	window = glscreen()
+	window = glscreen("ClusterVisualizer", resolution=(1024,1024))
 	yhalf(r)  = SimpleRectangle(r.x, r.y, r.w, div(r.h,3))
 	yhalf2(r) = SimpleRectangle(r.x, div(r.h,3), r.w, 2*div(r.h,3))
 
