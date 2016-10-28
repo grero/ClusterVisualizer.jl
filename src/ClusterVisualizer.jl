@@ -137,7 +137,7 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 				C = Array(RGBA{Float32},nbins)
 				cc = class_colors[i]
 				for j in 1:tt
-					C[j] = RGBA(cc.r, cc.g, cc.b, 0.3f0)
+					C[j] = RGBA(cc.r, cc.g, cc.b, 0.2f0)
 				end
 				for j in tt+1:nbins
 					C[j] = RGBA(cc.r, cc.g, cc.b, 0.0f0)
