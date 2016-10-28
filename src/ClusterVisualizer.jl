@@ -111,7 +111,7 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	end
 	_view(visualize(_trace, :lines, color=RGBA(0.0, 0.0, 1.0, 1.0)),screen2D)
 	_view(visualize(_vline, :lines, color=RGBA(1.0, 0.0, 0.0, 1.0)), screen2D)
-	_view(visualize((Circle, points), color=colors,model=model), screen3D, camera=:perspective)
+	_view(visualize((Circle, points), color=colors,model=model,scale=Vec3f0(0.01)), screen3D, camera=:perspective)
 	renderloop(window)
 	nothing
 end
