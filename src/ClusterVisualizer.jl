@@ -1,5 +1,5 @@
 module ClusterVisualizer
-using GLWindow, GLVisualize, GeometryTypes, GLAbstraction, Colors
+using GLWindow, GLVisualize, GeometryTypes, GLAbstraction, Colors, Reactive
 import Combinatorics
 
 abstract ClusterMetric
@@ -55,7 +55,7 @@ end
 
 IntraClusterDistance(X) = IntraClusterDistance(X, fill(1, size(X,2)))
 
-function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[], fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}())
+function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[], fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}(),show_paths=false)
 	ndims, npoints,nbins = size(X)
 	#compute size of cluster
 	if isnull(metric)
@@ -68,16 +68,30 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	end
 	if isempty(labels)
 		colors = Array(Colors.RGBA{Float32},npoints)
+		class_colors = [RGBA(1.0f0, 0.0f0, 0.0f0, 1.0f0)]
 		for i in 1:npoints
 			r,g,b = rand(Float32, 3)
 			colors[i] = RGBA(r,g,b,1.0f0)
 		end
 	else
 		classes = unique(labels)
-		class_colors = distinguishable_colors(length(classes), colorant"red")
+		class_colors = convert(Array{RGBA{Float32},1}, distinguishable_colors(length(classes), colorant"red"))
 		colors = class_colors[labels]
 	end
-	
+	if show_paths
+		if isempty(labels)
+			μ = zeros(3,1,nbins)
+			μ[:,1,:] = mean(X,2)
+		else
+			classes = unique(labels)
+			sort!(classes)
+			nclasses = length(classes)
+			μ = zeros(3,nclasses, nbins)
+			for (i,l) in enumerate(classes)
+				μ[:,i,:] = mean(X[:,find(x->x==l, labels),:],2)
+			end
+		end
+	end
 	#setup windows
 	window = glscreen("ClusterVisualizer", resolution=(1024,1024))
 	yhalf(r)  = SimpleRectangle(r.x, r.y, r.w, div(r.h,3))
@@ -114,6 +128,24 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	#create 3D points
 	points = map(timesignal) do tt
 		[Point3f0(X[1,i,tt], X[2,i,tt], X[3,i,tt]) for i in 1:npoints]
+	end
+	if show_paths
+		_colors = Array(Signal,size(μ,2))
+		for i in 1:size(μ,2)
+			_paths = [Point3f0(μ[1,i,j], μ[2,i,j], μ[3,i,j]) for j in 1:nbins]
+			_colors[i] = map(timesignal) do tt
+				C = Array(RGBA{Float32},nbins)
+				cc = class_colors[i]
+				for j in 1:tt
+					C[j] = RGBA(cc.r, cc.g, cc.b, 0.3f0)
+				end
+				for j in tt+1:nbins
+					C[j] = RGBA(cc.r, cc.g, cc.b, 0.0f0)
+				end
+				C
+			end
+			_view(visualize(_paths, :lines, color=_colors[i], model=model), screen3D, camera=:perspective)
+		end
 	end
 	_view(visualize(_trace, :lines, color=RGBA(0.0, 0.0, 1.0, 1.0)),screen2D)
 	_view(visualize(_vline, :lines, color=RGBA(1.0, 0.0, 0.0, 1.0)), screen2D)
