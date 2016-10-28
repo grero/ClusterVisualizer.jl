@@ -6,10 +6,12 @@ abstract ClusterMetric
 
 type IntraClusterDistance <: ClusterMetric
 	distance::Array{Float64,2}
+	events::Array{Tuple{Float64,Float64},1}
 end
 
 type InterClusterDistance <: ClusterMetric
 	distance::Array{Float64,2}
+	events::Array{Tuple{Float64,Float64},1}
 end
 
 function InterClusterDistance(X::Array{Float64,3}, labels::Array{Int64,1})
@@ -29,7 +31,7 @@ function InterClusterDistance(X::Array{Float64,3}, labels::Array{Int64,1})
 		distance[k,:] = sumabs2(centroids[:,c1,:] .- centroids[:,c2,:],1)
 		k += 1
 	end
-	InterClusterDistance(distance)
+	InterClusterDistance(distance,Tuple{Float64,Float64}[])
 end
 
 function IntraClusterDistance(X::Array{Float64,3}, labels::Array{Int64,1})
@@ -48,7 +50,7 @@ function IntraClusterDistance(X::Array{Float64,3}, labels::Array{Int64,1})
 		end
 		distances[i,:] ./= binomial(length(_idx),2)
 	end
-	IntraClusterDistance(distances)
+	IntraClusterDistance(distances, Tuple{Float64,Float64}[])
 end
 
 IntraClusterDistance(X) = IntraClusterDistance(X, fill(1, size(X,2)))
@@ -57,9 +59,12 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	ndims, npoints,nbins = size(X)
 	#compute size of cluster
 	if isnull(metric)
-		intra = mean(T(X, labels).distance,1)
+		_metric = T(X, labels)
+		intra = mean(_metric.distance,1)
+		_events = _metric.events
 	else
 		intra = mean(get(metric).distance,1)
+		_events = get(metric).events
 	end
 	if isempty(labels)
 		colors = Array(Colors.RGBA{Float32},npoints)
@@ -94,6 +99,7 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	#create 2d points
 	mi,mx = extrema(intra)
 	_trace = [Point2f0(10.0+(i-1)*Δt, h*(intra[i]-mi)/(mx-mi)+20) for i in 1:nbins]
+	#_event_indicators = [Point2f0() ]
 	#create vertical line
 	_vline = map(timesignal) do tt
 		[Point2f0(10+(tt-1)*Δt,_x) for _x in linspace(20,h,10)]
