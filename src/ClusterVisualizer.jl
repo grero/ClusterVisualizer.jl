@@ -14,6 +14,8 @@ type InterClusterDistance <: ClusterMetric
 	events::Array{Tuple{Float64,Float64},1}
 end
 
+InterClusterDistance(distance) = InterClusterDistance(distance, Tuple{Float64,Float64}[])
+
 function InterClusterDistance(X::Array{Float64,3}, labels::Array{Int64,1})
 	ndims, ntrials, nbins = size(X)
 	classes = unique(labels)
@@ -113,7 +115,12 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	#create 2d points
 	mi,mx = extrema(intra)
 	_trace = [Point2f0(10.0+(i-1)*Δt, h*(intra[i]-mi)/(mx-mi)+20) for i in 1:nbins]
-	#_event_indicators = [Point2f0() ]
+	if !isempty(_events)
+		for ee in _events
+			_event_indicators = [Point2f0(10 + (ee[1]-1)*Δt,_x) for _x in linspace(20, h, 10)]
+			_view(visualize(_event_indicators, :lines, color=RGBA(0.0, 0.0, 0.0, 1.0)), screen2D)
+		end
+	end
 	#create vertical line
 	_vline = map(timesignal) do tt
 		[Point2f0(10+(tt-1)*Δt,_x) for _x in linspace(20,h,10)]
