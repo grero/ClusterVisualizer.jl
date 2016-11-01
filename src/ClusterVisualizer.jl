@@ -57,7 +57,7 @@ end
 
 IntraClusterDistance(X) = IntraClusterDistance(X, fill(1, size(X,2)))
 
-function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[], fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}(),show_paths=false)
+function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[], fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}(),show_paths=false,save=false)
 	ndims, npoints,nbins = size(X)
 	#compute size of cluster
 	if isnull(metric)
@@ -157,7 +157,24 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	_view(visualize(_trace, :lines, color=RGBA(0.0, 0.0, 1.0, 1.0)),screen2D)
 	_view(visualize(_vline, :lines, color=RGBA(1.0, 0.0, 0.0, 1.0)), screen2D)
 	_view(visualize((Circle, points), color=colors,model=model,scale=Vec3f0(0.01)), screen3D, camera=:perspective)
-	renderloop(window)
+	if save
+		#add frames to vector
+		frames = []
+		while isopen(window)
+				GLWindow.render_frame(window)
+				GLWindow.swapbuffers(window)
+				GLWindow.pollevents()
+				push!(frames, GLWindow.screenbuffer(window))
+				yield()
+		end
+		name = "test"
+		folder = "$(homedir())/Documents/research/monkey/simulations/"
+		resampling = 0 # no resizing
+		create_video(frames, name, folder, 0,true)
+		destroy!(window)
+	else
+		renderloop(window)
+	end
 	nothing
 end
 
