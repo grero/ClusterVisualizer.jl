@@ -57,7 +57,10 @@ end
 
 IntraClusterDistance(X) = IntraClusterDistance(X, fill(1, size(X,2)))
 
-function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[], fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}(),show_paths=false,save=false)
+"""
+Animate the point clouds represented by the `X`. We have `(ndims,npoints,nbins) = size(X)` and `length(labels) == ntrials`.
+"""
+function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[], fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}(),show_paths=false,save=false,path_smooth=10)
 	ndims, npoints,nbins = size(X)
 	#compute size of cluster
 	if isnull(metric)
@@ -90,7 +93,14 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 			nclasses = length(classes)
 			μ = zeros(3,nclasses, nbins)
 			for (i,l) in enumerate(classes)
-				μ[:,i,:] = mean(X[:,find(x->x==l, labels),:],2)
+				_μ = mean(X[:,find(x->x==l, labels),:],2)
+				#smooth
+				for j in 1:nbins
+					mx = min(j,path_smooth)
+					for k in 1:mx
+						μ[:,i,j] .+= _μ[:,1,j-k+1]/mx
+					end
+				end
 			end
 		end
 	end
