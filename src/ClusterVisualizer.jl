@@ -170,20 +170,16 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 	if save
 		#add frames to vector
 		frames = []
-		while isopen(window)
-				GLWindow.render_frame(window)
-				GLWindow.swapbuffers(window)
-				GLWindow.pollevents()
-				push!(frames, GLWindow.screenbuffer(window))
-				yield()
-		end
+		preserve(map(timesignal) do tt
+					push!(frames, GLWindow.screenbuffer(window))
+					end)
+	end
+	renderloop(window)
+	if save
 		name = "test"
 		folder = "$(homedir())/Documents/research/monkey/simulations/"
 		resampling = 0 # no resizing
 		create_video(frames, name, folder, 0,true)
-		destroy!(window)
-	else
-		renderloop(window)
 	end
 	nothing
 end
