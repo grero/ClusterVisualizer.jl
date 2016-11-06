@@ -1,5 +1,6 @@
 module ClusterVisualizer
 using GLWindow, GLVisualize, GeometryTypes, GLAbstraction, Colors, Reactive
+using JLD
 import Combinatorics
 
 abstract ClusterMetric
@@ -182,6 +183,11 @@ function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[],
 		create_video(frames, name, folder, 0,true)
 	end
 	nothing
+end
+
+function animate_clusters{T<:ClusterMetric}(movie_data_file::String, fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}(),kvs...)
+	X,labels,inter,intra = JLD.load(movie_data_file,"X","labels","inter","intra")
+	animate_clusters(X,labels,fps;metric=Nullable{T}(T(inter)),kvs...)
 end
 
 end #module
