@@ -59,7 +59,9 @@ end
 IntraClusterDistance(X) = IntraClusterDistance(X, fill(1, size(X,2)))
 
 """
-Animate the point clouds represented by the `X`. We have `(ndims,npoints,nbins) = size(X)` and `length(labels) == ntrials`.
+Animate the point clouds represented by the `X`. We have `(ndims,npoints,nbins) = size(X)` and `length(labels) == ntrials`. `metric` represents a metric computed over the clusters and shown as a time series at the bottom of the screen. The default `metric` is the intra-cluster distance, i.e. the average distance between neighbouring points within each cluster.
+
+	function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[], fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}(),show_paths=false,save=false,path_smooth=10)
 """
 function animate_clusters{T<:ClusterMetric}(X::Array{Float64,3}, labels=Int64[], fps=60.0;metric::Nullable{T}=Nullable{IntraClusterDistance}(),show_paths=false,save=false,path_smooth=10)
 	ndims, npoints,nbins = size(X)
